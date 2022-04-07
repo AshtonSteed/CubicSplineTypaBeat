@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+PRINT = True
 def pop_matrix_legacy(n): #n is number of points, returns a n-2*n-2 matrix
   # legacy, only works when distance between points is constant due to assumptions in the origninal derivation
   a = np.zeros((n-2, n-2))
@@ -24,21 +25,29 @@ def pop_result_legacy(points): #returns product vector, legacy, worked with abov
 def pop_matrix(points): #n is number of points, returns a n-2*n-2 matrix
   n = len(points)
   a = np.zeros((n-2, n-2))
-  h0 = points[1, 0] - points[0,0]
-  h1 = points[2, 0] - points[1,0]
-  a[0, 0] = 2*(h0+h1)
-  a[0, 1] = h1
-  h0 = points[n-2, 0] - points[n-3,0]
-  h1 = points[n-1, 0] - points[n-2,0]
-  a[n-3, n-4] = h0
-  a[n-3, n-3] = 2*(h0+h1)
-  for i in range(n-4):
-    h0 = points[i+2, 0] - points[i+1,0]
-    h1 = points[i+3, 0] - points[i+2,0]
-    a[i + 1, i]= h0
-    a[i + 1,i + 1]= 2*(h0 + h1)
-    a[i + 1, i+2]= h1
-  return a
+  if n == 3:
+    h0 = points[1, 0] - points[0,0]
+    h1 = points[2, 0] - points[1,0]
+    a[0, 0] = 2*(h0+h1)
+    return a
+  elif n == 2:
+    return a
+  else: 
+    h0 = points[1, 0] - points[0,0]
+    h1 = points[2, 0] - points[1,0]
+    a[0, 0] = 2*(h0+h1)
+    a[0, 1] = h1
+    h0 = points[n-2, 0] - points[n-3,0]
+    h1 = points[n-1, 0] - points[n-2,0]
+    a[n-3, n-4] = h0
+    a[n-3, n-3] = 2*(h0+h1)
+    for i in range(n-4):
+      h0 = points[i+2, 0] - points[i+1,0]
+      h1 = points[i+3, 0] - points[i+2,0]
+      a[i + 1, i]= h0
+      a[i + 1,i + 1]= 2*(h0 + h1)
+      a[i + 1, i+2]= h1
+    return a
 
 def pop_result(points): #returns product vector
   b = np.zeros(len(points)-2)
@@ -62,29 +71,34 @@ def cubic_interpolation(points):
     c = (points[i+1,1]-points[i,1])/h - (m_vals[i+1]+2 * m_vals[i]) / 6 * h
     d = points[i, 1]
     polynomials[i] = np.array([d, c, b, a])
-  print("Matrix: \n", matrix)
-  print("M Values: \n", np.expand_dims(m_vals, 1))
-  print("Result Values: \n", np.expand_dims(result, 1))
-  
+
+  if PRINT:
+    print("Matrix: \n", matrix)
+    print("M Values: \n", np.expand_dims(m_vals, 1))
+    print("Result Values: \n", np.expand_dims(result, 1))
+    
   return polynomials
   
-  
-  
-points = np.random.rand(5, 2) * 10
-print(points)
-points = points[points[:, 0].argsort()]
-print(points)
-#points = np.array([[0,0],[1.5, 0], [2, 1], [3, 1],[4, .5]])
-polynomials = cubic_interpolation(points)
-
-for i in range(len(polynomials)):
-  poly = np.polynomial.polynomial.Polynomial(polynomials[i], domain=[points[i,0], points[i, 0] + 1],window=[0, 1])
-  #print(poly.convert())
-  x = np.linspace(points[i, 0], points[i+1, 0], 100)
-  #x = np.linspace(0, 10, 100)
-  y = poly(x)
-  #print(y)
-  plt.plot(x, y)
-plt.plot(points[:, 0], points[:, 1], '.k')
-plt.show()
+def plot_cubic_splines(polynomials, points):
+  for i in range(len(polynomials)):
+    poly = np.polynomial.polynomial.Polynomial(polynomials[i], domain=[points[i,0], points[i, 0] + 1],window=[0, 1])
+    #print(poly.convert())
+    x = np.linspace(points[i, 0], points[i+1, 0], 100)
+    #x = np.linspace(0, 10, 100)
+    y = poly(x)
+    #print(y)
+    plt.plot(x, y)
+  plt.plot(points[:, 0], points[:, 1], '.k')
+  #plt.ylim([0, UPSCALE])#makes view square, good sometimes idk
+  plt.show()
+def main():
+  N = 8
+  UPSCALE = 10
+  points = np.random.rand(N, 2) * UPSCALE
+  points = points[points[:, 0].argsort()]
+  if PRINT:
+    print(points)
+  polynomials = cubic_interpolation(points)
+  plot_cubic_splines(polynomials, points)
+main()
   
